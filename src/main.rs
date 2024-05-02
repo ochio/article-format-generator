@@ -1,16 +1,21 @@
-
-use std::process::Command;
+use std::io::{self, Write}; // Writeをインポートしてflush()を使用可能にする
 
 fn main() {
-    let output = Command::new("ls")
-        .output()
-        .expect("Failed to execute command");
+    let media = read_input("media");
+    println!("{}", media)
+}
 
-    if output.status.success() {
-        let s = String::from_utf8_lossy(&output.stdout);
-        println!("Command executed successfully:\n{}", s);
-    } else {
-        let s = String::from_utf8_lossy(&output.stderr);
-        println!("Command failed:\n{}", s);
-    }
+fn read_input(label: &str) -> String {
+    // プロンプトを表示
+    print!("{}?: ", label);
+    io::stdout().flush().unwrap(); // 標準出力をフラッシュしてプロンプトをすぐに表示
+
+    let mut input = String::new(); // 文字列を格納するための変数
+
+    io::stdin()
+        .read_line(&mut input)
+        .expect("Failed to read line"); // 標準入力からの読み取り
+
+    let output = input.trim_end().to_string();
+    output
 }
