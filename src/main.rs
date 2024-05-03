@@ -19,3 +19,8 @@ fn read_input(label: &str) -> String {
     let output = input.trim_end().to_string();
     output
 }
+
+fn make_content(dir: &str) {
+    let path = dir.to_string() + "/content.md";
+    File::create(path).unwrap();
+}
