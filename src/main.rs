@@ -1,8 +1,13 @@
+use std::fs::{self, File};
 use std::io::{self, Write}; // Writeをインポートしてflush()を使用可能にする
 
 fn main() {
     let media = read_input("media");
-    println!("{}", media)
+    let title = read_input("title");
+    let dir = media + "/" + &title;
+    fs::create_dir_all(&dir).unwrap();
+
+    make_content(&dir);
 }
 
 fn read_input(label: &str) -> String {
