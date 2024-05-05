@@ -1,8 +1,11 @@
 use std::fs::{self, File};
 use std::io::{self, Write}; // Writeをインポートしてflush()を使用可能にする
 
+const MEDIA_LIST: [&str; 2] = ["qiita", "zenn"];
+
 fn main() {
     let media = read_input("media");
+    validate_media_list(&media);
     let title = read_input("title");
     let dir = media + "/" + &title;
     fs::create_dir_all(&dir).unwrap();
@@ -28,4 +31,8 @@ fn read_input(label: &str) -> String {
 fn make_content(dir: &str) {
     let path = dir.to_string() + "/content.md";
     File::create(path).unwrap();
+}
+
+fn validate_media(media: &str) -> bool {
+    MEDIA_LIST.contains(&media)
 }
