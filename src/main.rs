@@ -4,8 +4,7 @@ use std::io::{self, Write}; // Writeをインポートしてflush()を使用可�
 const MEDIA_LIST: [&str; 2] = ["qiita", "zenn"];
 
 fn main() {
-    let media = read_input("media");
-    validate_media(&media);
+    let media = get_media();
     let title = read_input("title");
     let dir = media + "/" + &title;
     fs::create_dir_all(&dir).unwrap();
@@ -31,6 +30,18 @@ fn read_input(label: &str) -> String {
 fn make_content(dir: &str) {
     let path = dir.to_string() + "/content.md";
     File::create(path).unwrap();
+}
+
+fn get_media() -> String {
+    let mut media = String::new();
+    loop {
+        media = read_input("media");
+        if validate_media(&media) {
+            return media;
+        } else {
+            continue;
+        }
+    }
 }
 
 fn validate_media(media: &str) -> bool {
