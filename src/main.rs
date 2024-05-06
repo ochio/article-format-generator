@@ -1,3 +1,4 @@
+use colored::Colorize;
 use std::fs::{self, File};
 use std::io::{self, Write}; // Writeをインポートしてflush()を使用可能にする
 
@@ -39,6 +40,7 @@ fn get_media() -> String {
         if validate_media(&media) {
             return media;
         } else {
+            println!("{}", "invalid media".red());
             continue;
         }
     }
