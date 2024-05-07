@@ -11,13 +11,13 @@ enum Media {
 }
 
 impl FromStr for Media {
-    type Err = ();
+    type Err = String;
 
     fn from_str(input: &str) -> Result<Self, Self::Err> {
         match input.trim().to_lowercase().as_str() {
             "qiita" => Ok(Media::Qiita),
             "zenn" => Ok(Media::Zenn),
-            _ => Err(()),
+            _ => Err("invalid input".to_string()),
         }
     }
 }
@@ -38,17 +38,15 @@ struct Article {
 }
 
 impl Article {
-    fn new(media: Media, title: &str) -> Article {
+    fn new(media: Media, title: &str) -> Result<Article, String> {
         let dir = format!("{}/{}", media, title);
-        fs::create_dir_all(&dir)
-            .map_err(|e| format!("Failed to create directory: {}", e))
-            .unwrap();
+        fs::create_dir_all(&dir).map_err(|e| format!("Failed to create directory: {}", e))?;
 
-        Article {
+        Ok(Article {
             media,
             title: title.to_string(),
             dir,
-        }
+        })
     }
 
     fn make_content(&self) -> Result<(), String> {
@@ -57,26 +55,37 @@ impl Article {
         Ok(())
     }
 
-    fn create_symbolic(self) {
+    fn create_symbolic(self) -> Result<(), String> {
         let target_path = format!("{}/content.md", self.dir); // 文字列連結をformat!で実行
         let linked_file = format!("{}.md", self.title);
         Command::new("ln")
             .args(["-s", &target_path, &linked_file]) // シンボリックリンクの対象とリンク名
             .status() // コマンドを実行し、終了ステータスを取得
-            .expect("failed to execute command"); // エラー発生時にpanicを発生させる
+            .map_err(|_| "Failed to execute command".to_string())
+            .and_then(|status| {
+                if status.success() {
+                    Ok(())
+                } else {
+                    Err("Symbolic link creation failed".to_string())
+                }
+            })
     }
 }
 
 fn main() {
     let (media, title) = prompt_for_article_info();
-    let article = Article::new(media, &title);
 
-    match article.make_content() {
-        Ok(_) => {
-            article.create_symbolic();
-            println!("Article created successfully")
-        }
-        Err(e) => eprintln!("Error: {}", e),
+    match Article::new(media, &title) {
+        Ok(article) => match article
+            .make_content()
+            .and_then(|_| article.create_symbolic())
+        {
+            Ok(_) => {
+                println!("Article created successfully")
+            }
+            Err(e) => eprintln!("Error: {}", e),
+        },
+        Err(e) => eprintln!("Error creating article: {}", e),
     }
 }
 
