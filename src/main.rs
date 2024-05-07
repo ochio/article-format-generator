@@ -1,25 +1,51 @@
 use colored::Colorize;
+use std::fmt;
 use std::fs::{self, File};
 use std::io::{self, Write}; // Writeをインポートしてflush()を使用可能にする
 use std::process::Command;
+use std::str::FromStr;
 
-const MEDIA_LIST: [&str; 2] = ["qiita", "zenn"];
+enum Media {
+    Qiita,
+    Zenn,
+}
+
+impl FromStr for Media {
+    type Err = ();
+
+    fn from_str(input: &str) -> Result<Self, Self::Err> {
+        match input.trim().to_lowercase().as_str() {
+            "qiita" => Ok(Media::Qiita),
+            "zenn" => Ok(Media::Zenn),
+            _ => Err(()),
+        }
+    }
+}
+
+impl fmt::Display for Media {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Media::Qiita => write!(f, "qiita"),
+            Media::Zenn => write!(f, "zenn"),
+        }
+    }
+}
 
 struct Article {
-    media: String,
+    media: Media,
     title: String,
     dir: String,
 }
 
 impl Article {
-    fn new(media: &str, title: &str) -> Article {
+    fn new(media: Media, title: &str) -> Article {
         let dir = format!("{}/{}", media, title);
         fs::create_dir_all(&dir)
             .map_err(|e| format!("Failed to create directory: {}", e))
             .unwrap();
 
         Article {
-            media: media.to_string(),
+            media,
             title: title.to_string(),
             dir,
         }
@@ -43,7 +69,7 @@ impl Article {
 
 fn main() {
     let (media, title) = prompt_for_article_info();
-    let article = Article::new(&media, &title);
+    let article = Article::new(media, &title);
 
     match article.make_content() {
         Ok(_) => {
@@ -54,8 +80,7 @@ fn main() {
     }
 }
 
-// TODO: mediaはenumで管理する
-fn prompt_for_article_info() -> (String, String) {
+fn prompt_for_article_info() -> (Media, String) {
     let media = get_media();
     let title = read_input("title");
     (media, title)
@@ -76,19 +101,12 @@ fn read_input(label: &str) -> String {
     output
 }
 
-fn get_media() -> String {
-    let mut media = String::new();
+fn get_media() -> Media {
     loop {
-        media = read_input("media");
-        if validate_media(&media) {
-            return media;
-        } else {
-            println!("{}", "invalid media".red());
-            continue;
+        let media = read_input("media");
+        match media.parse::<Media>() {
+            Ok(media) => return media,
+            Err(_) => println!("{}", "invalid media".red()),
         }
     }
-}
-
-fn validate_media(media: &str) -> bool {
-    MEDIA_LIST.contains(&media)
 }
