@@ -5,6 +5,7 @@ use std::io::{self, Write}; // Writeをインポートしてflush()を使用可�
 use std::process::Command;
 use std::str::FromStr;
 
+#[derive(Debug, PartialEq)]
 enum Media {
     Qiita,
     Zenn,
@@ -117,5 +118,49 @@ fn get_media() -> Media {
             Ok(media) => return media,
             Err(_) => println!("{}", "invalid media".red()),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn media_from_str() {
+        assert_eq!(Media::from_str("qiita"), Ok(Media::Qiita));
+        assert_eq!(Media::from_str("zenn"), Ok(Media::Zenn));
+        assert!(Media::from_str("blog").is_err());
+    }
+
+    #[test]
+    fn create_new_directory() {
+        let media = Media::Qiita;
+        let title = "Test Article";
+        let article = Article::new(media, title);
+
+        assert!(article.is_ok());
+        let article = article.unwrap();
+        assert_eq!(article.title, "Test Article");
+        assert_eq!(article.media, Media::Qiita);
+
+        assert!(fs::metadata(&article.dir).is_ok());
+        cleanup_directory(&article.media.to_string());
+    }
+
+    #[test]
+    fn make_content() {
+        let media = Media::Qiita;
+        let title = "Content Creation Test";
+        let article = Article::new(media, title).unwrap();
+        let result = article.make_content();
+
+        assert!(result.is_ok());
+        let content_path = format!("{}/content.md", article.dir);
+        assert!(fs::metadata(&content_path).is_ok());
+        cleanup_directory(&article.media.to_string());
+    }
+
+    fn cleanup_directory(dir: &str) {
+        fs::remove_dir_all(dir).expect("Failed to clean up the test directory");
     }
 }
