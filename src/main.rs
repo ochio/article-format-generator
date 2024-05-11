@@ -160,7 +160,7 @@ mod tests {
         assert_eq!(article.media, Media::Qiita);
 
         assert!(fs::metadata(&article.dir).is_ok());
-        cleanup_directory(&article.media.to_string());
+        cleanup_directory(&"blog");
     }
 
     #[test]
@@ -173,7 +173,7 @@ mod tests {
         assert!(result.is_ok());
         let content_path = format!("{}/content.md", article.dir);
         assert!(fs::metadata(&content_path).is_ok());
-        cleanup_directory(&article.media.to_string());
+        cleanup_directory(&"blog");
     }
 
     fn cleanup_directory(dir: &str) {
