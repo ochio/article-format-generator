@@ -1,7 +1,10 @@
 use colored::Colorize;
+use dotenv;
 use std::fmt;
 use std::fs::{self, File};
-use std::io::{self, Write}; // Writeをインポートしてflush()を使用可能にする
+use std::io::{self, Write};
+use std::path::Path;
+// Writeをインポートしてflush()を使用可能にする
 use std::process::Command;
 use std::str::FromStr;
 
@@ -36,31 +39,44 @@ struct Article {
     media: Media,
     title: String,
     dir: String,
+    file_path: String,
 }
 
 impl Article {
     fn new(media: Media, title: &str) -> Result<Article, String> {
-        let dir = format!("{}/{}", media, title);
+        let base_dir = dotenv::var("BASE_DIR").unwrap();
+        let dir = format!("{}/{}/{}", base_dir, media, title);
+        let file_path = format!("{}/content.md", dir);
         fs::create_dir_all(&dir).map_err(|e| format!("Failed to create directory: {}", e))?;
 
         Ok(Article {
             media,
             title: title.to_string(),
             dir,
+            file_path,
         })
     }
 
     fn make_content(&self) -> Result<(), String> {
-        let path = format!("{}/content.md", self.dir);
-        File::create(&path).map_err(|e| format!("Failed to create content file: {}", e))?;
+        File::create(&self.file_path)
+            .map_err(|e| format!("Failed to create content file: {}", e))?;
         Ok(())
     }
 
     fn create_symbolic(self) -> Result<(), String> {
-        let target_path = format!("{}/content.md", self.dir); // 文字列連結をformat!で実行
-        let linked_file = format!("{}.md", self.title);
+        let base_dir = dotenv::var("BASE_DIR").unwrap();
+        let contents_dir = format!("{}/all", base_dir);
+        let linked_file = format!("{}/{}.md", contents_dir, self.title);
+
+        if !Path::new(&contents_dir).is_dir() {
+            match fs::create_dir(contents_dir) {
+                Ok(_) => println!("Success create directory"),
+                Err(_) => eprintln!("Failed to create directory"),
+            }
+        }
+
         Command::new("ln")
-            .args(["-s", &target_path, &linked_file]) // シンボリックリンクの対象とリンク名
+            .args(["-s", &self.file_path, &linked_file]) // シンボリックリンクの対象とリンク名
             .status() // コマンドを実行し、終了ステータスを取得
             .map_err(|_| "Failed to execute command".to_string())
             .and_then(|status| {
