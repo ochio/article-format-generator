@@ -98,7 +98,7 @@ fn main() {
             .and_then(|_| article.create_symbolic())
         {
             Ok(_) => {
-                println!("Article created successfully")
+                println!("{}", "Article created successfully".green())
             }
             Err(e) => eprintln!("Error: {}", e),
         },
