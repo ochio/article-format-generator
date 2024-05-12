@@ -2,9 +2,8 @@ use colored::Colorize;
 use dotenv;
 use std::fmt;
 use std::fs::{self, File};
-use std::io::{self, Write};
+use std::io::{self, Write}; // Writeをインポートしてflush()を使用可能にする
 use std::path::Path;
-// Writeをインポートしてflush()を使用可能にする
 use std::process::Command;
 use std::str::FromStr;
 
